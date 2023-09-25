@@ -1,4 +1,4 @@
-package com.example.music.src.member.entity;
+package com.example.music.src.user.entity;
 
 import com.example.music.common.entity.BaseEntity;
 import lombok.Getter;
@@ -7,11 +7,12 @@ import javax.persistence.*;
 
 @Getter
 @Entity
-@Table(name = "Member")
-public class Member extends BaseEntity {
+@Table(name = "User")
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue
+    @Column(name = "user_id")
     private Long id; // 유저 고유 식별값 pk
 
     @Column(nullable = false)
