@@ -1,4 +1,4 @@
-package com.example.music.src.genre.entity;
+package com.example.music.src.music.entity;
 
 import javax.persistence.*;
 
