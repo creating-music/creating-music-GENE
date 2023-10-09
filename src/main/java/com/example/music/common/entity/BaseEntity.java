@@ -14,6 +14,6 @@ public class BaseEntity {
 
     @CreationTimestamp
     @Column(name = "createdAt", nullable = false,updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // column 생성 날짜
 
 }
