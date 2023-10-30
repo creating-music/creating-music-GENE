@@ -1,4 +1,11 @@
 package com.example.music.src.user;
 
-public interface UserRepository {
+import com.example.music.src.user.entity.User;
+import java.util.Optional;
+import javax.swing.text.html.Option;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserRepository extends JpaRepository<User,Long> {
+
+    Optional<User> findByEmail(String email);
 }
