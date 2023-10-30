@@ -16,10 +16,10 @@ public class MusicPlaylist {
     private Long id;
 
     @ManyToOne
-    @Column(name = "playlist_id")
+    @JoinColumn(name = "playlist_id")
     private PlayList playList;
 
     @ManyToOne
-    @Column(name = "music_id")
+    @JoinColumn(name = "music_id")
     private Music music;
 }

@@ -1,8 +1,12 @@
 package com.example.music.src.user;
 
+import static com.example.music.common.response.BaseResponseStatus.*;
+
+import com.example.music.common.exceptions.BaseException;
 import com.example.music.src.user.entity.User;
 import com.example.music.src.user.model.LoginReq;
 import com.example.music.src.user.model.LoginRes;
+import com.example.music.src.utils.SHA256;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,20 +29,20 @@ public class UserService {
      */
     public LoginRes login(LoginReq loginReq){
 
-        String encryptPwd;
-
-        encryptPwd = loginReq.getPassword();
-
-        Optional<User> byEmail = userRepository.findByEmail(loginReq.getEmail());
-        if(byEmail.isEmpty())
-            throw new IllegalArgumentException("유효하지 않은 이메일입니다.");
-
-
+        User user;
         // todo : db 검증
-        // 1. email과 비번(암
-        // 2. jwt 생
-        // 비번 먼저
-        userRepository.
+        String encryptPwd;
+        encryptPwd = new SHA256().encrypt(loginReq.getPassword());
+
+        user = userRepository.findByEmail(loginReq.getEmail())
+                .orElseThrow(()-> new BaseException(USER_INVALID_EMAIL));
+
+        if(!user.getPassword().equals(encryptPwd)){
+            throw new BaseException(USER_INVALID_PASSWORD);
+        }
+
+        // todo : jwt 생성
+
 
 
         return new LoginRes("jwt");
