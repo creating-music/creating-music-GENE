@@ -32,6 +32,7 @@ dependencies {
 
 	runtimeOnly 'com.h2database:h2' // 임시로 사용
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 }
 
 tasks.named('test') {
