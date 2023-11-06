@@ -27,7 +27,7 @@ public class Music extends BaseEntity {
     private String musicUrl; // 음악이 저장된 경로 (저장 위치)
 
     @Column(nullable = false)
-    private boolean visible;
+    private boolean visible; // false : 0 - 비공개 | true : 1 - 공개
 
     @Column(name = "cover_url")
     private String coverUrl; // 음악 사진
