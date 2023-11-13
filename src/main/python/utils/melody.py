@@ -3,23 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-bar_division = 16
-
-pat = []
-weight = [.8, .2, .4, .2] * 4
-
-def __choice(p):
-    return random.choices(
-        population=[True, False],
-        weights=[p, 1 - p],
-        k=1
-    )[0]
-
-def make_melody_pattern(randomness=0):
-    idx = list(range(bar_division))
-    pattern = [__choice(weight[i]) for i in idx]
-    return pattern
-
 '''
 Pattern of melody.
 
@@ -79,7 +62,7 @@ class MelodyPattern:
         pd = np.zeros(self.bar_length * self.division_count)
 
         for i in reversed(range(depth)):
-            step = self.measure[0] // 2**i
+            step = (self.division_count // self.measure[1]) // 2**i
             pd[::step] = weights[i]
 
         return pd
@@ -90,8 +73,13 @@ class MelodyPattern:
         return pattern
 
 class Melody(MelodyPattern):
+    # 멜로디가 올라갈/내려갈 수 있는 한계.
+    limit_high = pretty_midi.note_name_to_number('E6')
+    limit_low = pretty_midi.note_name_to_number('E3')
+
     def __init__(
             self, 
+            key,
             randomness,
             bar_length=1,
             division_count=16,
@@ -101,6 +89,7 @@ class Melody(MelodyPattern):
             velocity=[]
         ):
         super().__init__(randomness, bar_length, division_count, measure)
+        self.key = key
         self.notes = notes
         self.velocity = velocity
 
@@ -109,44 +98,48 @@ class Melody(MelodyPattern):
         if (pattern != None):
             self.pattern = pattern
 
+    
     def set_melody(self, notes):
         pass
 
 # testing melody pattern
 if __name__ == '__main__':
-    '''
-    output_midi = pretty_midi.PrettyMIDI()
+    # division_count = 8
+    # p = MelodyPattern(
+    #     randomness=1, 
+    #     bar_length=1, 
+    #     division_count=division_count, 
+    #     measure=(4,4)
+    # )
 
-    main_piano = pretty_midi.Instrument(program=0)
-    start_base = 0
+    # output_midi = pretty_midi.PrettyMIDI()
+    # main_piano = pretty_midi.Instrument(program=0)
+    # start_base = 0
 
-    pat = make_melody_pattern()
+    # duration = 2 / division_count
+    # 
 
-    duration = 2 / bar_division
+    # for x in p.pattern:
+    #     note_number = pretty_midi.note_name_to_number('C5')
+    #     note = pretty_midi.Note(
+    #         velocity=100,
+    #         pitch=note_number,
+    #         start=start_base,
+    #         end=start_base + duration*0.75,
+    #     )
+    #         
+    #     if (x == 1):
+    #         main_piano.notes.append(note)
 
-    for x in pat:
-        note_number = pretty_midi.note_name_to_number('A5')
-        note = pretty_midi.Note(
-            velocity=100,
-            pitch=note_number,
-            start=start_base,
-            end=start_base + duration*0.75,
-        )
-            
-        if (x == True):
-            main_piano.notes.append(note)
+    #     start_base += duration
 
-        start_base += duration
-
-    # for _ in range(10):
-    #     print(make_melody_pattern())
-    print(pat)
-    output_midi.instruments.append(main_piano)
-    output_midi.write('./output.mid')
-    '''
+    # print(p.pattern)
+    # output_midi.instruments.append(main_piano)
+    # output_midi.write('./output.mid')
     
+    # '''
     randomness = 0.5
-    division_count = 16
+    division_count = 32
     bar_length = 1
    
     k = 1
@@ -170,3 +163,4 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     plt.show()
+    # '''
