@@ -24,7 +24,11 @@ class MelodyPattern:
         self.measure = measure                  # 박자
 
         self._pd = self._make_probability_distribution()    # pattern을 생성할 확률분포
-        self.pattern = self._build_pattern()                # 멜로디 패턴
+        self.pattern = self.build_pattern()                # 멜로디 패턴
+
+        # note가 두 개 이하면 다시 생성.
+        while sum(self.pattern) <= 2:
+            self.pattern = self.build_pattern()
 
     def __repr__(self):
         return self.pattern
@@ -52,7 +56,7 @@ class MelodyPattern:
 
         h = lambda x, a: x/a
       
-        # 정박이 아닌 박에 대해 interpolation 진행.
+        # 정박이 아닌 박의 확률을 구하기 위해 interpolate.
         # somthing magical happens (?)
         weights[0] = primary
 
@@ -68,99 +72,6 @@ class MelodyPattern:
         return pd
        
     # 확률분포에 따라 패턴 생성.
-    def _build_pattern(self):
+    def build_pattern(self):
         pattern = [MelodyPattern._choice(p) for p in list(self._pd)]
         return pattern
-
-class Melody(MelodyPattern):
-    # 멜로디가 올라갈/내려갈 수 있는 한계.
-    limit_high = pretty_midi.note_name_to_number('E6')
-    limit_low = pretty_midi.note_name_to_number('E3')
-
-    def __init__(
-            self, 
-            key,
-            randomness,
-            bar_length=1,
-            division_count=16,
-            measure=(4,4),
-            pattern=None, 
-            notes=[], 
-            velocity=[]
-        ):
-        super().__init__(randomness, bar_length, division_count, measure)
-        self.key = key
-        self.notes = notes
-        self.velocity = velocity
-
-        # randomness와 pattern을 동시에 넘겨주면, randomness는 pattern에 영향을 주지 않음.
-        # 즉, 주어진 pattern으로 고정.
-        if (pattern != None):
-            self.pattern = pattern
-
-    
-    def set_melody(self, notes):
-        pass
-
-# testing melody pattern
-if __name__ == '__main__':
-    # division_count = 8
-    # p = MelodyPattern(
-    #     randomness=1, 
-    #     bar_length=1, 
-    #     division_count=division_count, 
-    #     measure=(4,4)
-    # )
-
-    # output_midi = pretty_midi.PrettyMIDI()
-    # main_piano = pretty_midi.Instrument(program=0)
-    # start_base = 0
-
-    # duration = 2 / division_count
-    # 
-
-    # for x in p.pattern:
-    #     note_number = pretty_midi.note_name_to_number('C5')
-    #     note = pretty_midi.Note(
-    #         velocity=100,
-    #         pitch=note_number,
-    #         start=start_base,
-    #         end=start_base + duration*0.75,
-    #     )
-    #         
-    #     if (x == 1):
-    #         main_piano.notes.append(note)
-
-    #     start_base += duration
-
-    # print(p.pattern)
-    # output_midi.instruments.append(main_piano)
-    # output_midi.write('./output.mid')
-    
-    # '''
-    randomness = 0.5
-    division_count = 32
-    bar_length = 1
-   
-    k = 1
-    for i in np.linspace(0, 1, 4):
-        p = MelodyPattern(
-            randomness=i,
-            bar_length=bar_length,
-            division_count=division_count,
-            measure=(4,4)
-        )
-
-        # print(p._pd)
-        
-        plt.subplot(2, 2, k)
-        plt.ylim([0, 1.1])
-        x = np.arange(division_count * bar_length)
-        plt.bar(x, p._pd)
-        plt.title(f'r = {i:.2f}')
-
-        k += 1
-
-    plt.tight_layout()
-    plt.show()
-    # '''
