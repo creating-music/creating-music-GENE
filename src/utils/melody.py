@@ -79,7 +79,7 @@ class MelodyPattern:
 class Melody(MelodyPattern):
     # 멜로디가 올라갈 / 내려갈 수 있는 한계.
     limit = range(
-        pretty_midi.note_name_to_number('E3'),
+        pretty_midi.note_name_to_number('E4'),
         pretty_midi.note_name_to_number('E6') + 1
     )
 
@@ -158,39 +158,59 @@ class Melody(MelodyPattern):
     def build_velocity(self):
         pass
 
+    # 주어진 melody, pattern randomness에 따라 음을 약간 변화시킨다.
+    def differ_melody(self, melody_randomness, pattern_randomness=0):
+        limit_len = len(self.limit)
+        res_melody = []
+        for (mel, dur) in self.notes:
+            if (random.uniform(0, 1) <= melody_randomness):
+                res_melody.append([mel, dur])
+            else:
+                curr_mel_index = self.limit.index(mel)
+                next_mel = Melody._calc_next_note(curr_mel_index, self.randomness, limit_len)
+                res_melody.append(next_mel)
+
+        self.notes = res_melody
+
 class Scale:
     def __init__(
             self,
             root,
+            scale
         ):
         self.root = root
-        self.scale = set()
+        self.build_scale(scale)
 
-    def build_scale(self):
-        pass
+    def build_scale(self, scale):
+        # A4 = 440Hz. 높은 음자리표에 맞춤.
+        OCTAVE = 12
+        root_as_number = pretty_midi.note_name_to_number(f'{self.root}4')
+        weight = np.arange(-4, 5) * OCTAVE
+        main_scale = np.array(scale)
+        result_scale = []
+        for w in weight:
+            result_scale.extend(main_scale + root_as_number - w)
+        self.scale = set(result_scale)
 
 class MajorScale(Scale):
     def __init__(
             self,
             root
             ):
-        super().__init__(root)
-        self._build_scale()
-
-    def _build_scale(self):
-        # A4 = 440Hz. 높은 음자리표에 맞춤.
-        OCTAVE = 12
-        root_as_number = pretty_midi.note_name_to_number(f'{self.root}4')
-        weight = np.arange(-4, 5) * OCTAVE
-        main_scale = np.array([0, 2, 4, 5, 7, 9, 11])
-        scale = []
-        for w in weight:
-            scale.extend(main_scale + root_as_number - w)
-        self.scale = set(scale)
+        default_scale = [0, 2, 4, 5, 7, 9, 11]
+        super().__init__(root, default_scale)
+        
+class MelodicMinorScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 2, 3, 5, 7, 9, 11]
+        super().__init__(root, default_scale)
 
 if __name__ == '__main__':
     mscale = MajorScale('C');
-    melody = Melody(MajorScale('C'), 1)
+    melody = Melody(mscale, randomness=0.5)
 
     melody_main = np.array(melody.notes)[:, 0]
     melody_dur = np.array(melody.notes)[:, 1]
@@ -207,4 +227,4 @@ if __name__ == '__main__':
 
     print(np.vectorize(pretty_midi.note_number_to_name)(np.array(melody_main)), melody_dur)
     output_midi.instruments.append(main_piano)
-    output_midi.write('output.mid')
+    output_midi.write('src/test/output.mid')
