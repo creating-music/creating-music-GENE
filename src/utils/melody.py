@@ -114,7 +114,7 @@ class Melody(MelodyPattern):
     @staticmethod
     def _calc_next_note(curr_note_index, randomness, max_limit):
         while True:
-            next_dist = np.random.normal(curr_note_index, randomness+0.1)
+            next_dist = np.random.normal(curr_note_index, 2*randomness+0.1)
             next_note_index = np.floor(next_dist).astype(int) 
             
             if next_note_index in range(max_limit):
@@ -167,8 +167,9 @@ class Melody(MelodyPattern):
                 res_melody.append([mel, dur])
             else:
                 curr_mel_index = self.limit.index(mel)
-                next_mel = Melody._calc_next_note(curr_mel_index, self.randomness, limit_len)
-                res_melody.append(next_mel)
+                next_mel_index = Melody._calc_next_note(curr_mel_index, self.randomness, limit_len)
+                next_mel = self.limit[next_mel_index]
+                res_melody.append([next_mel, dur])
 
         self.notes = res_melody
 
