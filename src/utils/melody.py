@@ -3,6 +3,82 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from pychord import Chord
+from typing import Tuple
+
+
+class Scale:
+    def __init__(
+            self,
+            root,
+            scale
+        ):
+        self.root = root
+        self.default_scale = scale
+        self.build_scale(scale)
+
+    def build_scale(self, scale):
+        # A4 = 440Hz. 높은 음자리표에 맞춤.
+        OCTAVE = 12
+        root_as_number = pretty_midi.note_name_to_number(f'{self.root}4')
+        weight = np.arange(-4, 5) * OCTAVE
+        main_scale = np.array(scale)
+        result_scale = []
+        for w in weight:
+            result_scale.extend(main_scale + root_as_number - w)
+        self.scale = set(result_scale)
+
+    def has_note(self, note_name):
+        '''
+        스케일에 해당 음이 있는지 확인.
+        '''
+
+        OCTAVE = 12
+        notes_with_sharp = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+        notes_with_flat  = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+
+        if (note_name in notes_with_sharp):
+            idx = notes_with_sharp.index(note_name)
+        else:
+            idx = notes_with_flat.index(note_name)
+    
+        if (self.root in notes_with_sharp):
+            root_idx = notes_with_sharp.index(self.root)
+        else:
+            root_idx = notes_with_flat.index(self.root)
+
+        diff = idx - root_idx
+        if (diff < 0):
+            diff + OCTAVE
+
+        return diff in self.default_scale
+        
+    def has_chord(self, chord: Chord):
+        '''
+        주어진 코드가 스케일 내에 있는지 확인.
+        '''
+        
+        res = True
+        for note in chord.components():
+            res = res and self.has_note(note)
+            
+        return res
+            
+
+class MajorScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 2, 4, 5, 7, 9, 11]
+        super().__init__(root, default_scale)
+        
+class MelodicMinorScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 2, 3, 5, 7, 9, 11]
+        super().__init__(root, default_scale)
 
 '''
 Pattern of melody.
@@ -86,32 +162,34 @@ class Melody(MelodyPattern):
 
     def __init__(
             self, 
-            scale,
-            randomness,
-            start_chord=None,
+            scale: Scale,
+            randomness: int,
+            start_chord: Chord=None,
             bar_length=1,
             division_count=16,
-            measure=(4,4),
-            pattern=None, 
-            notes=[], 
-            velocity=[]
+            measure: tuple[int, int]=(4,4),
+            pattern: MelodyPattern=None, 
+            notes: list[int]=None, 
+            velocity: list[int]=None
         ):
         super().__init__(randomness, bar_length, division_count, measure)
-        self.scale = scale
-        self.notes = notes
-        self.velocity = velocity
+        self.scale: Scale = scale
+        self.notes: list[int] = notes
+        self.velocity: list[int] = velocity
         self.usable_notes = list(set(Melody.limit).intersection(scale.scale))
         self.start_chord = start_chord
 
         # randomness와 pattern을 동시에 넘겨주면, randomness는 pattern에 영향을 주지 않음.
         # 즉, 주어진 pattern으로 고정.
-        if (pattern != None):
+        if (pattern is not None):
             self.pattern = pattern
         
-        if (notes == []):
+        if (notes is None):
+            self.notes = []
             self.build_melody()
 
-        if (velocity == []):
+        if (velocity is None):
+            self.velocity = []
             self.build_velocity()
 
     @staticmethod
@@ -123,13 +201,15 @@ class Melody(MelodyPattern):
             if next_note_index in range(max_limit):
                 return next_note_index
 
-    def _choose_from_chord(chord):
+    @staticmethod
+    def _choose_from_chord(chord: Chord):
         min_range_num = int(pretty_midi.note_number_to_name(Melody.limit[0])[-1])
         max_range_num = int(pretty_midi.note_number_to_name(Melody.limit[-1])[-1])
         chord_octave_range = range(min_range_num, max_range_num + 1)
 
+
         while True:
-            note_name = random.choice(chord) + str(random.choice(chord_octave_range))
+            note_name = random.choice(chord.components()) + str(random.choice(chord_octave_range))
             note_number = pretty_midi.note_name_to_number(note_name)
 
             if (note_number in Melody.limit):
@@ -148,14 +228,14 @@ class Melody(MelodyPattern):
                 note_len += 1
                 continue
                
-            if (is_first_note and start_chord != None):
+            if (is_first_note and start_chord is not None):
                 weight = 0.5 if self.scale.has_chord(start_chord) else 1
 
                 # 코드가 스케일에 맞지 않으면 최대한 코드를 중시.
                 # 코드의 음들로 첫 음 결정.
                 if (random.uniform(0, 1) <= weight):
                     is_first_note = False
-                    note_number = self._choose_from_chord(start_chord)
+                    note_number = Melody._choose_from_chord(start_chord)
                     continue
                 else:
                     pass    # fall through
@@ -189,6 +269,8 @@ class Melody(MelodyPattern):
             note_number,
             note_len
         ]) 
+
+        print(self.notes)
             
     def build_velocity(self):
         pass
@@ -202,6 +284,7 @@ class Melody(MelodyPattern):
             if (random.uniform(0, 1) <= melody_randomness):
                 res_melody.append([mel, dur])
             else:
+                # 현재 멜로디와 가장 가까운 음을 찾는다.
                 curr_mel_index = self.usable_notes.index(mel)
                 next_mel_index = Melody._calc_next_note(curr_mel_index, self.randomness, limit_len)
                 next_mel = self.usable_notes[next_mel_index]
@@ -209,97 +292,34 @@ class Melody(MelodyPattern):
 
         self.notes = res_melody
 
-class Scale:
-    def __init__(
-            self,
-            root,
-            scale
-        ):
-        self.root = root
-        self.default_scale = scale
-        self.build_scale(scale)
 
-    def build_scale(self, scale):
-        # A4 = 440Hz. 높은 음자리표에 맞춤.
-        OCTAVE = 12
-        root_as_number = pretty_midi.note_name_to_number(f'{self.root}4')
-        weight = np.arange(-4, 5) * OCTAVE
-        main_scale = np.array(scale)
-        result_scale = []
-        for w in weight:
-            result_scale.extend(main_scale + root_as_number - w)
-        self.scale = set(result_scale)
+def printMelody(melody):
+    melody_main = np.array(melody.notes)[:, 0]
+    melody_dur = np.array(melody.notes)[:, 1]
 
-    def has_note(self, note_name):
-        '''
-        스케일에 해당 음이 있는지 확인.
-        '''
-
-        OCTAVE = 12
-        notes_with_sharp = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
-        notes_with_flat  = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
-
-        if (note_name in notes_with_sharp):
-            idx = notes_with_sharp.index(note_name)
-        else:
-            idx = notes_with_flat.index(note_name)
-    
-        if (self.root in notes_with_sharp):
-            root_idx = notes_with_sharp.index(self.root)
-        else:
-            root_idx = notes_with_flat.index(self.root)
-
-        diff = idx - root_idx
-        if (diff < 0):
-            diff + OCTAVE
-
-        return diff in self.default_scale
-        
-    def has_chord(self, chord: Chord):
-        '''
-        주어진 코드가 스케일 내에 있는지 확인.
-        '''
-        
-        res = True
-        for note in chord.components():
-            res = res and self.has_note(note)
-            
-        return res
-            
-
-class MajorScale(Scale):
-    def __init__(
-            self,
-            root
-            ):
-        default_scale = [0, 2, 4, 5, 7, 9, 11]
-        super().__init__(root, default_scale)
-        
-class MelodicMinorScale(Scale):
-    def __init__(
-            self,
-            root
-            ):
-        default_scale = [0, 2, 3, 5, 7, 9, 11]
-        super().__init__(root, default_scale)
+    print(np.vectorize(pretty_midi.note_number_to_name)(np.array(melody_main)), melody_dur)
 
 if __name__ == '__main__':
     mscale = MajorScale('C');
     melody = Melody(mscale, randomness=0.5)
+    melody_2 = Melody(mscale, randomness=0.8)
 
-    melody_main = np.array(melody.notes)[:, 0]
-    melody_dur = np.array(melody.notes)[:, 1]
-    p = melody.pattern
+    # melody_main = np.array(melody.notes)[:, 0]
+    # melody_dur = np.array(melody.notes)[:, 1]
+    # p = melody.pattern
 
-    output_midi = pretty_midi.PrettyMIDI()
-    main_piano = pretty_midi.Instrument(program=0)
+    # output_midi = pretty_midi.PrettyMIDI()
+    # main_piano = pretty_midi.Instrument(program=0)
 
-    start_base = 0
-    for (m, d) in zip(melody_main, melody_dur):
-        note = pretty_midi.Note(velocity=100, pitch=m, start=start_base, end=start_base + d/4 - 0.25/4)
-        main_piano.notes.append(note)
-        start_base += d/4
+    # start_base = 0
+    # for (m, d) in zip(melody_main, melody_dur):
+    #     note = pretty_midi.Note(velocity=100, pitch=m, start=start_base, end=start_base + d/4 - 0.25/4)
+    #     main_piano.notes.append(note)
+    #     start_base += d/4
 
-    print(np.vectorize(pretty_midi.note_number_to_name)(np.array(melody_main)), melody_dur)
+    # print(np.vectorize(pretty_midi.note_number_to_name)(np.array(melody_main)), melody_dur)
     # output_midi.instruments.append(main_piano)
     # output_midi.write('src/test/output.mid')
+
+    printMelody(melody)
+    printMelody(melody_2)
