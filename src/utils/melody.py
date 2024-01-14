@@ -7,20 +7,26 @@ from typing import Tuple
 
 
 class Scale:
+    __notes_with_sharp = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+    __notes_with_flat  = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+    __OCTAVE = 12
+
     def __init__(
             self,
             root,
             scale
         ):
-        self.root = root
-        self.default_scale = scale
+        self.root = root                    # 근음. ex) 'C'
+        self.default_scale = scale          # 스케일의 음 간격. ex) [0, 2, 4, 5, 7, 9, 11]
+        self.scale = None                   # 실제 스케일의 음. 
+        self.__mode = 1                     # 몇 번째 모드인지.
         self.build_scale(scale)
 
     def build_scale(self, scale):
         # A4 = 440Hz. 높은 음자리표에 맞춤.
-        OCTAVE = 12
+        
         root_as_number = pretty_midi.note_name_to_number(f'{self.root}4')
-        weight = np.arange(-4, 5) * OCTAVE
+        weight = np.arange(-4, 5) * Scale.__OCTAVE
         main_scale = np.array(scale)
         result_scale = []
         for w in weight:
@@ -32,23 +38,21 @@ class Scale:
         스케일에 해당 음이 있는지 확인.
         '''
 
-        OCTAVE = 12
-        notes_with_sharp = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
-        notes_with_flat  = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
+        Scale.__OCTAVE = 12
 
-        if (note_name in notes_with_sharp):
-            idx = notes_with_sharp.index(note_name)
+        if (note_name in Scale.__notes_with_sharp):
+            idx = Scale.__notes_with_sharp.index(note_name)
         else:
-            idx = notes_with_flat.index(note_name)
+            idx = Scale.__notes_with_flat.index(note_name)
     
-        if (self.root in notes_with_sharp):
-            root_idx = notes_with_sharp.index(self.root)
+        if (self.root in Scale.__notes_with_sharp):
+            root_idx = Scale.__notes_with_sharp.index(self.root)
         else:
-            root_idx = notes_with_flat.index(self.root)
+            root_idx = Scale.__notes_with_flat.index(self.root)
 
         diff = idx - root_idx
         if (diff < 0):
-            diff + OCTAVE
+            diff + Scale.__OCTAVE
 
         return diff in self.default_scale
         
@@ -62,7 +66,34 @@ class Scale:
             res = res and self.has_note(note)
             
         return res
-            
+
+    def modedRoot(self, sharpOrFlat='sharp'):
+        '''
+        모드에 의해 변경된 근음 반환.
+        '''
+
+        if (sharpOrFlat not in ['sharp', 'flat']): 
+            return
+
+        if (self.root in Scale.__notes_with_sharp):
+            idx = Scale.__notes_with_sharp.index(self.root)
+        else:
+            idx = Scale.__notes_with_flat.index(self.root)
+        
+        offset = self.default_scale[self.__mode]
+        idx = (offset + idx) % Scale.__OCTAVE
+        
+        notes = Scale.__notes_with_sharp if (sharpOrFlat == 'sharp') else Scale.__notes_with_flat
+        return notes[idx]
+
+    @property 
+    def mode(self):
+        return self.__mode
+
+    @mode.setter
+    def mode(self, mode):
+        # Normalize mode
+        mode = ((mode - 1) % len(self.default_scale)) + 1
 
 class MajorScale(Scale):
     def __init__(
@@ -71,6 +102,10 @@ class MajorScale(Scale):
             ):
         default_scale = [0, 2, 4, 5, 7, 9, 11]
         super().__init__(root, default_scale)
+
+    def modedScaleName(self):
+        scale_name = ['Ionian', 'Dorian', 'Phrygian', 'Lydian', 'Mixolydian', 'Aeolian', 'Locrian']
+        return scale_name[self.mode]
         
 class MelodicMinorScale(Scale):
     def __init__(
@@ -80,13 +115,13 @@ class MelodicMinorScale(Scale):
         default_scale = [0, 2, 3, 5, 7, 9, 11]
         super().__init__(root, default_scale)
 
-'''
-Pattern of melody.
-
-Pattern is binary array. ex) [True, False, False, ...]
-The melody will be played only for True value.
-''' 
 class MelodyPattern:
+    '''
+    Pattern of melody.
+
+    Pattern is binary array. ex) [True, False, False, ...]
+    The melody will be played only for True value.
+    ''' 
     def __init__(
             self, 
             randomness, 
