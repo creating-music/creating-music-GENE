@@ -115,6 +115,39 @@ class MelodicMinorScale(Scale):
         default_scale = [0, 2, 3, 5, 7, 9, 11]
         super().__init__(root, default_scale)
 
+class PentatonicScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 2, 4, 7, 9]
+        super().__init__(root, default_scale)
+
+class BluesScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 3, 5, 6, 7, 10]
+        super().__init__(root, default_scale)
+
+class WholeToneScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 2, 4, 6, 8, 10]
+        super().__init__(root, default_scale)
+
+class ChromaticScale(Scale):
+    def __init__(
+            self,
+            root
+            ):
+        default_scale = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        super().__init__(root, default_scale)
+        
+
 class MelodyPattern:
     '''
     Pattern of melody.
