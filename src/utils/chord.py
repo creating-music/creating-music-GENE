@@ -45,7 +45,7 @@ class Pattern:
         self.length = len(pattern)
 
 
-class Arpeggio(Pattern):
+class ArpeggioPattern(Pattern):
     def __init__(
         self,
         measure=(4, 4),
@@ -99,7 +99,8 @@ class ChordWithPattern:
 
         for (i, pat) in enumerate(chord_pattern):
             default_pitch = 3
-            curr_chord: Chord = self.cp.cp[i // self.cp.chord_nums]
+            curr_chord: Chord = self.cp.cp[i //
+                                           (len(chord_pattern) // self.cp.chord_nums)]
             chord_component = curr_chord.components_with_pitch(default_pitch)
 
             note_pitch = pat // 12
@@ -108,6 +109,6 @@ class ChordWithPattern:
             note = pretty_midi.note_name_to_number(chord_component[note_order])
             note += note_pitch * 12
 
-            chord_pattern[i] = [note, 16 // self.division_count]
+            chord_pattern[i] = [note, 1]
 
         self.notes = chord_pattern
