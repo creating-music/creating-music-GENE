@@ -223,7 +223,6 @@ class MelodyPattern:
         division_count=16,
         measure=(4, 4)
     ):
-
         self.randomness = randomness            # 무작위도
         self.bar_length = bar_length            # 마디 개수
         self.division_count = division_count    # 한 마디를 몇 개로 나눌건지
@@ -362,11 +361,14 @@ class Melody(MelodyPattern):
         chord_notes_number = []
         for c in chord.components():
             chord_notes_number.append(pretty_midi.note_name_to_number(f'{c}4'))
+        
         weight = np.arange(-3, 5) * Scale.OCTAVE
         chord_notes_number = np.array(chord_notes_number)
         result_chord_notes = []
+
         for w in weight:
             result_chord_notes.extend(chord_notes_number - w)
+        
         chord_notes_number = list(
             set(result_chord_notes).intersection(Melody.limit))
 
@@ -391,6 +393,7 @@ class Melody(MelodyPattern):
 
         cps: list[ChordProgression] = []
         _chords: list[Chord] = []
+        
         for i in range(cp_len):
             _chords.append(self.chord_progression.cp[i])
             if ((i+1) % chord_num_for_each_bar == 0):
@@ -413,7 +416,7 @@ class Melody(MelodyPattern):
         scale = self.scale
 
         note_number = 0
-        note_len = 1
+        note_len = 0
         notes = []
 
         usable_notes = self.usable_notes
@@ -435,23 +438,23 @@ class Melody(MelodyPattern):
                 note_len += 1
                 continue
 
-            if (is_first_note_of_chord):
-                note_number = Melody._choose_from_chord(
-                    curr_chord, note_number, self.randomness)
-                continue
-
             # 이전의 note를 append.
             notes.append([
                 note_number,
                 note_len
             ])
 
+            # 현재 note를 계산
             note_len = 1
-            note_number = Melody._calc_next_note(
-                note_number,
-                usable_notes,
-                self.randomness,
-            )
+            if (is_first_note_of_chord):
+                note_number = Melody._choose_from_chord(
+                    curr_chord, note_number, self.randomness)
+            else:
+                note_number = Melody._calc_next_note(
+                    note_number,
+                    usable_notes,
+                    self.randomness,
+                )
 
         # 마지막 note 까지 append
         notes.append([
