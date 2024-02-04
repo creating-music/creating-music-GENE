@@ -324,8 +324,19 @@ class Melody(MelodyPattern):
             self.velocity = []
             self.build_velocity()
 
-    def __str__(self):
-        return str(self.notes)
+    def __str__(self, with_name=False):
+        if (not with_name):
+            return str(self.notes)
+
+        notes = np.array(self.notes)
+        note_numbers = notes[:, 0]
+        note_durations = notes[:, 1]
+
+        res = []
+        for (name, duration) in zip(note_numbers, note_durations):
+            res.append([pretty_midi.note_number_to_name(name), duration])
+
+        return str(res)
 
     @staticmethod
     def _calc_next_note(curr_note_number, usable_notes, randomness):
