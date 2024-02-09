@@ -62,24 +62,43 @@ start_base = 0
 
 default_scale = MajorScale('C')
 c = ChordWithPattern(
-    cp=Chords(chord_progressions[2], 2),
-    pattern=ArpeggioPattern(method='one-five-seven'),
+    cp=Chords(chord_progressions[1], 2),
+    pattern=ArpeggioPattern(pat_method='one-three-seven', dur_method='sustain'),
     division_count=8
 )
 m = Melody(
     scale=default_scale,
-    randomness=0.7,
+    randomness=1,
     chord_progression=c.cp,
     measure=(4, 4),
     division_count=16
 )
 
-create_mini_part(
+c2 = ChordWithPattern(
+    cp=Chords(chord_progressions[2], 2),
+    pattern=ArpeggioPattern(pat_method='one-three-seven', dur_method='sustain'),
+    division_count=8
+)
+m2 = Melody(
+    scale=default_scale,
+    randomness=1,
+    chord_progression=c2.cp,
+    pattern=m.pattern
+)
+
+start_base = create_mini_part(
     output_midi=output_midi,
     instruments=[main_piano, sub_piano],
     start_base=start_base,
     melody=m,
     chord=c,
+)
+start_base = create_mini_part(
+    output_midi=output_midi,
+    instruments=[main_piano, sub_piano],
+    start_base=start_base,
+    melody=m2,
+    chord=c2,
 )
 
 output_midi.instruments.append(main_piano)

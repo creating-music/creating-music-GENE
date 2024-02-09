@@ -38,9 +38,11 @@ class Pattern:
     def __init__(
         self,
         pattern: list[int],
+        duration: list[int],
         measure: tuple[int, int]
     ) -> None:
         self.pattern = pattern
+        self.duration = duration
         self.measure = measure
         self.length = len(pattern)
 
@@ -49,7 +51,8 @@ class ArpeggioPattern(Pattern):
     def __init__(
         self,
         measure=(4, 4),
-        method='one-five'
+        pat_method='one-five',
+        dur_method='sustain',
     ):
         # Only for 4/4 measure.
         default_patterns = {
@@ -59,13 +62,21 @@ class ArpeggioPattern(Pattern):
             'one-three-seven': [0, 1, 3, 1],
             'arpeggio': [0, 1, 2, 3]
         }
-        if (method not in default_patterns.keys()):
+        default_durations = {
+            'stacato': [1, 1, 1, 1],
+            'sustain': [4, 3, 2, 1],
+        }
+        if (pat_method not in default_patterns.keys()):
+            return
+        if (dur_method not in default_durations.keys()):
             return
 
-        super().__init__(default_patterns[method], measure)
+        super().__init__(default_patterns[pat_method], default_durations[dur_method], measure)
 
 
 class ChordWithPattern:
+    DEFAULT_PITCH = 3
+
     def __init__(
         self,
         cp: Chords,
@@ -93,15 +104,14 @@ class ChordWithPattern:
 
     def build_chord(self):
         bar_length = self.cp.bar_length
-        pattern_nums = (
-            bar_length * self.division_count) // self.pattern.length
+        pattern_nums = (bar_length * self.division_count) // self.pattern.length
         chord_pattern = self.pattern.pattern * pattern_nums
+        dur_pattern = self.pattern.duration * pattern_nums
 
         for (i, pat) in enumerate(chord_pattern):
-            default_pitch = 3
-            curr_chord: Chord = self.cp.cp[i //
-                                           (len(chord_pattern) // self.cp.chord_nums)]
-            chord_component = curr_chord.components_with_pitch(default_pitch)
+            
+            curr_chord: Chord = self.cp.cp[i // (len(chord_pattern) // self.cp.chord_nums)]
+            chord_component = curr_chord.components_with_pitch(ChordWithPattern.DEFAULT_PITCH)
 
             note_pitch = pat // 12
             note_order = (pat % 12) % len(chord_component)
@@ -109,6 +119,6 @@ class ChordWithPattern:
             note = pretty_midi.note_name_to_number(chord_component[note_order])
             note += note_pitch * 12
 
-            chord_pattern[i] = [note, 1]
+            chord_pattern[i] = [note, dur_pattern[i]]
 
         self.notes = chord_pattern
