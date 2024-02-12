@@ -4,7 +4,6 @@ import pretty_midi
 import numpy as np
 
 chord_progressions = [
-    ChordProgression(['Am', 'F', 'G', 'C']),
     ChordProgression(['Dm7', 'G7', 'CM7', 'CM7']),
     ChordProgression(['Dm7', 'G7', 'CM7', 'Am7']),
     ChordProgression(['Dm7', 'G7', 'CM7', 'A7']),

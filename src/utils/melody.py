@@ -1,11 +1,10 @@
 import pretty_midi
 import numpy as np
-import matplotlib.pyplot as plt
 import random
 from pychord import Chord, ChordProgression
-from typing import Tuple
 from .chord import Chords
 from .scale import *
+from .util import divide_chunk_into
 
 
 class MelodyPattern:
@@ -95,20 +94,21 @@ class Melody(MelodyPattern):
         scale: Scale,
         randomness: int,
         chord_progression: Chords,
-        bar_length=1,
         division_count=16,
+        ref_note=0,
         measure: tuple[int, int] = (4, 4),
         pattern: MelodyPattern = None,
         notes: list[int] = None,
         velocity: list[int] = None
     ):
-        super().__init__(randomness, bar_length, division_count, measure)
+        super().__init__(randomness, chord_progression.bar_length, division_count, measure)
         self.scale: Scale = scale
         self.notes: list[int] = notes
         self.velocity: list[int] = velocity
         self.usable_notes = list(set(Melody.limit).intersection(scale.scale))
         self.chord_progression = chord_progression
         self.start_chord = Chord('CM7')
+        self.ref_note = ref_note
 
         # randomness와 pattern을 동시에 넘겨주면,f randomness는 pattern에 영향을 주지 않음.
         # 즉, 주어진 pattern으로 고정.
@@ -186,27 +186,22 @@ class Melody(MelodyPattern):
                 return chord_notes_number[next_note_idx]
 
     def build_melody(self):
-        # 코드 진행을 마디 크기로 분할
-        cp_bar = self.chord_progression.bar_length
-        cp_len = len(self.chord_progression.cp)
-        chord_num_for_each_bar = cp_len // cp_bar
+        '''
+        코드 진행을 마디 크기로 분할 후, 각 마디별로 멜로디 제작
+        '''
 
-        cps: list[ChordProgression] = []
-        _chords: list[Chord] = []
-        
-        for i in range(cp_len):
-            _chords.append(self.chord_progression.cp[i])
-            if ((i+1) % chord_num_for_each_bar == 0):
-                cps.append(ChordProgression(_chords))
-                _chords = []
+        cps = divide_chunk_into(self.chord_progression.cp, self.bar_length)
+        patterns = divide_chunk_into(self.pattern, self.bar_length)
 
         notes = []
-        for cp in cps:
-            notes.extend(self._make_bar(cp))
+        for (cp, pattern) in zip(cps, patterns):
+            bar_notes = self._make_bar(cp, pattern, self.ref_note)
+            self.ref_note = bar_notes[-1][0]
+            notes.extend(bar_notes)
 
         self.notes = notes
 
-    def _make_bar(self, cp: ChordProgression):
+    def _make_bar(self, cp: ChordProgression, pattern: MelodyPattern, ref_note=0):
         '''
         한 마디에 해당하는 멜로디를 만듦
         '''
@@ -215,13 +210,13 @@ class Melody(MelodyPattern):
 
         scale = self.scale
 
+        is_first_note = True
         note_number = 0
         note_len = 0
         notes = []
 
         usable_notes = self.usable_notes
-        for (idx, p) in enumerate(self.pattern):
-
+        for (idx, p) in enumerate(pattern):
             nth_chord = idx // note_num_for_each_chord
             is_first_note_of_chord = idx % note_num_for_each_chord == 0
             curr_chord = cp[nth_chord]
@@ -244,11 +239,14 @@ class Melody(MelodyPattern):
                 note_len
             ])
 
-            # 현재 note를 계산
+            # 현재 note를 ref_note에 기반하여 계산
             note_len = 1
+            if (is_first_note):
+                note_number = ref_note
+                is_first_note = False
+            
             if (is_first_note_of_chord):
-                note_number = Melody._choose_from_chord(
-                    curr_chord, note_number, self.randomness)
+                note_number = Melody._choose_from_chord(curr_chord, note_number, self.randomness)
             else:
                 note_number = Melody._calc_next_note(
                     note_number,
@@ -284,6 +282,49 @@ class Melody(MelodyPattern):
                 res_melody.append([next_mel, dur])
 
         self.notes = res_melody
+
+    def get_differ_melody(self, melody_randomness, pattern_randomness=0):
+        '''
+        자신과 닮은 Melody 를 만든다.
+        '''
+        notes = []
+
+        total_duration = 0
+        for [note, dur] in self.notes:
+
+            if (note == 0) or (random.uniform(0, 1) > melody_randomness):
+                notes.append([note, dur])
+            else:
+                cp = self.chord_progression.cp
+                curr_chord = cp[total_duration // ((self.bar_length * self.division_count) // len(cp))]
+
+                print(curr_chord)
+                scale = Scale.estimate_scale(curr_chord)
+                usable_notes = list(scale.scale.intersection(Melody.limit)) 
+                note_number = Melody._calc_next_note(
+                    note,
+                    usable_notes,
+                    melody_randomness,
+                )
+                notes.append([note_number, dur])
+        
+            total_duration += dur
+
+        return Melody(
+            scale=self.scale,
+            randomness=self.randomness,
+            chord_progression=self.chord_progression,
+            division_count=self.division_count,
+            ref_note=self.ref_note,
+            measure=self.measure,
+            pattern=self.pattern,
+            notes=notes,
+            velocity=self.velocity,
+        )
+
+    @property
+    def end_note(self):
+        return self.notes[-1][0]
 
 
 def find_nearest(array, value):

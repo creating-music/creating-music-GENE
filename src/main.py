@@ -53,6 +53,25 @@ def create_mini_part(
         raise Exception("Length of melody and chords don't match!")
     return start_base_main
 
+def create_part(
+    scale: Scale,
+    chords: Chords,
+    randomness: int,
+    bar_part: int=16,
+    measure=(4,4)
+):  
+    bar_per_cp = chords.bar_length
+    
+    # 기본적으로 AABA 형식을 따름
+    melody_primary = Melody(
+        scale=scale,
+        randomness=randomness,
+        chord_progression=chords.cp,
+        measure=(4, 4),
+        division_count=16
+    )
+
+    
 
 if __name__ == '__main__':
 
@@ -76,17 +95,7 @@ if __name__ == '__main__':
         division_count=16
     )
 
-    c2 = ChordWithPattern(
-        cp=Chords(chord_progressions[0], 2),
-        pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
-        division_count=8
-    )
-    m2 = Melody(
-        scale=default_scale,
-        randomness=0.7,
-        chord_progression=c2.cp,
-        pattern=m.pattern
-    )
+    m2 = m.get_differ_melody(melody_randomness=0.5)
 
     start_base = create_mini_part(
         output_midi=output_midi,
@@ -100,7 +109,7 @@ if __name__ == '__main__':
         instruments=[main_piano, sub_piano],
         start_base=start_base,
         melody=m2,
-        chord=c2,
+        chord=c,
     )
 
     output_midi.instruments.append(main_piano)
