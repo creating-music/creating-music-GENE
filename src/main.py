@@ -1,9 +1,5 @@
-from tracemalloc import start
 import pretty_midi
 import numpy as np
-import matplotlib.pyplot as plt
-import random
-from pychord import Chord
 from utils.chord import *
 from utils.melody import *
 
@@ -20,7 +16,7 @@ def apply_mini_part(
             velocity=100, 
             pitch=n,
             start=start_base, 
-            end=start_base + d*duration*0.75
+            end=start_base + d*duration
         )
         instrument.notes.append(note)
         start_base += d*duration
@@ -48,59 +44,65 @@ def create_mini_part(
     start_base_sub = apply_mini_part(
         sub_instrument, start_base, dur_sub, chord.notes)
 
+    start_base_main = np.round(start_base_main, decimals=4)
+    start_base_sub = np.round(start_base_sub, decimals=4)
+
+    print((start_base_main, start_base_sub))
     # Note that start_base_main == start_base_sub
     if (start_base_main != start_base_sub):
         raise Exception("Length of melody and chords don't match!")
     return start_base_main
 
 
-output_midi = pretty_midi.PrettyMIDI()
-main_piano = pretty_midi.Instrument(program=0)
-sub_piano = pretty_midi.Instrument(program=0)
+if __name__ == '__main__':
 
-start_base = 0
+    output_midi = pretty_midi.PrettyMIDI()
+    main_piano = pretty_midi.Instrument(program=0)
+    sub_piano = pretty_midi.Instrument(program=0)
 
-default_scale = MajorScale('C')
-c = ChordWithPattern(
-    cp=Chords(chord_progressions[1], 2),
-    pattern=ArpeggioPattern(pat_method='one-three-seven', dur_method='sustain'),
-    division_count=8
-)
-m = Melody(
-    scale=default_scale,
-    randomness=1,
-    chord_progression=c.cp,
-    measure=(4, 4),
-    division_count=16
-)
+    start_base = 0
 
-c2 = ChordWithPattern(
-    cp=Chords(chord_progressions[2], 2),
-    pattern=ArpeggioPattern(pat_method='one-three-seven', dur_method='sustain'),
-    division_count=8
-)
-m2 = Melody(
-    scale=default_scale,
-    randomness=1,
-    chord_progression=c2.cp,
-    pattern=m.pattern
-)
+    default_scale = MajorScale('C')
+    c = ChordWithPattern(
+        cp=Chords(chord_progressions[0], 2),
+        pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
+        division_count=8
+    )
+    m = Melody(
+        scale=default_scale,
+        randomness=0.7,
+        chord_progression=c.cp,
+        measure=(4, 4),
+        division_count=16
+    )
 
-start_base = create_mini_part(
-    output_midi=output_midi,
-    instruments=[main_piano, sub_piano],
-    start_base=start_base,
-    melody=m,
-    chord=c,
-)
-start_base = create_mini_part(
-    output_midi=output_midi,
-    instruments=[main_piano, sub_piano],
-    start_base=start_base,
-    melody=m2,
-    chord=c2,
-)
+    c2 = ChordWithPattern(
+        cp=Chords(chord_progressions[0], 2),
+        pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
+        division_count=8
+    )
+    m2 = Melody(
+        scale=default_scale,
+        randomness=0.7,
+        chord_progression=c2.cp,
+        pattern=m.pattern
+    )
 
-output_midi.instruments.append(main_piano)
-output_midi.instruments.append(sub_piano)
-output_midi.write('src/test/output.mid')
+    start_base = create_mini_part(
+        output_midi=output_midi,
+        instruments=[main_piano, sub_piano],
+        start_base=start_base,
+        melody=m,
+        chord=c,
+    )
+    start_base = create_mini_part(
+        output_midi=output_midi,
+        instruments=[main_piano, sub_piano],
+        start_base=start_base,
+        melody=m2,
+        chord=c2,
+    )
+
+    output_midi.instruments.append(main_piano)
+    output_midi.instruments.append(sub_piano)
+    output_midi.write('src/test/output.mid')
