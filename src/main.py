@@ -55,23 +55,45 @@ def create_mini_part(
 
 def create_part(
     scale: Scale,
-    chords: Chords,
+    chord_pattern: ChordWithPattern,
     randomness: int,
-    bar_part: int=16,
+    start_base: float,
+    output_midi,
+    instruments,
+    bar_part: int=8,
     measure=(4,4)
 ):  
-    bar_per_cp = chords.bar_length
+    bar_per_cp = chord_pattern.cp.bar_length
     
-    # 기본적으로 AABA 형식을 따름
+    # 기본적으로 AA'BA 형식을 따름
     melody_primary = Melody(
         scale=scale,
         randomness=randomness,
-        chord_progression=chords.cp,
-        measure=(4, 4),
+        chord_progression=chord_pattern.cp,
+        measure=measure,
+        division_count=16
+    )
+    melody_diff = melody_primary.get_differ_melody(melody_randomness=0.5)
+    melody_b = Melody(
+        scale=scale,
+        randomness=randomness,
+        chord_progression=chord_pattern.cp,
+        measure=measure,
         division_count=16
     )
 
-    
+    melodies = [melody_primary, melody_diff, melody_b, melody_primary]
+
+    for i in range(bar_part // chord_pattern.cp.bar_length):
+        start_base = create_mini_part(
+            output_midi=output_midi, 
+            instruments=instruments, 
+            start_base=start_base, 
+            melody=melodies[i], 
+            chord=chord_pattern
+        )
+
+    return start_base
 
 if __name__ == '__main__':
 
@@ -82,34 +104,49 @@ if __name__ == '__main__':
     start_base = 0
 
     default_scale = MajorScale('C')
-    c = ChordWithPattern(
-        cp=Chords(chord_progressions[0], 2),
-        pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
-        division_count=8
-    )
-    m = Melody(
+    # c = ChordWithPattern(
+    #     cp=Chords(chord_progressions[0], 2),
+    #     pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
+    #     division_count=8
+    # )
+    # m = Melody(
+    #     scale=default_scale,
+    #     randomness=0.7,
+    #     chord_progression=c.cp,
+    #     measure=(4, 4),
+    #     division_count=16
+    # )
+
+    # m2 = m.get_differ_melody(melody_randomness=0.5)
+
+    # start_base = create_mini_part(
+    #     output_midi=output_midi,
+    #     instruments=[main_piano, sub_piano],
+    #     start_base=start_base,
+    #     melody=m,
+    #     chord=c,
+    # )
+    # start_base = create_mini_part(
+    #     output_midi=output_midi,
+    #     instruments=[main_piano, sub_piano],
+    #     start_base=start_base,
+    #     melody=m2,
+    #     chord=c,
+    # )
+
+    verse = create_part(
         scale=default_scale,
-        randomness=0.7,
-        chord_progression=c.cp,
-        measure=(4, 4),
-        division_count=16
-    )
-
-    m2 = m.get_differ_melody(melody_randomness=0.5)
-
-    start_base = create_mini_part(
+        chord_pattern=ChordWithPattern(
+            cp=Chords(chord_progressions[0], 2),
+            pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
+            division_count=8,
+        ),
+        randomness=0.2,
+        start_base=start_base,
         output_midi=output_midi,
         instruments=[main_piano, sub_piano],
-        start_base=start_base,
-        melody=m,
-        chord=c,
-    )
-    start_base = create_mini_part(
-        output_midi=output_midi,
-        instruments=[main_piano, sub_piano],
-        start_base=start_base,
-        melody=m2,
-        chord=c,
+        bar_part=8,
+        measure=(4,4),
     )
 
     output_midi.instruments.append(main_piano)
