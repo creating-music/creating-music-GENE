@@ -1,5 +1,7 @@
 src/test
-src/main.py
+# src/main.py
+
+.vscode
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
