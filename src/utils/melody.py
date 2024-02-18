@@ -19,12 +19,12 @@ class MelodyPattern:
         self,
         randomness,
         bar_length=1,
-        division_count=16,
+        division=16,
         measure=(4, 4)
     ):
         self.randomness = randomness            # 무작위도
         self.bar_length = bar_length            # 마디 개수
-        self.division_count = division_count    # 한 마디를 몇 개로 나눌건지
+        self.division = division    # 한 마디를 몇 개로 나눌건지
         self.measure = measure                  # 박자
 
         self._make_probability_distribution()    # pattern을 생성할 확률분포
@@ -52,7 +52,7 @@ class MelodyPattern:
     # 패턴의 확률분포를 만듦.
     # 큰 randomness는 더욱 분산이 큰 분포를 만듦 = 높은 엔트로피.
     def _make_probability_distribution(self):
-        depth = np.log2(self.division_count).astype(np.uint8) - 1
+        depth = np.log2(self.division).astype(np.uint8) - 1
         weights = np.zeros(depth)
 
         r = self.randomness
@@ -67,10 +67,10 @@ class MelodyPattern:
         for i in range(depth - 1):
             weights[i+1] = (1-h(r, 2**i))*(1-primary) + h(r, 2**i)*primary
 
-        pd = np.zeros(self.bar_length * self.division_count)
+        pd = np.zeros(self.bar_length * self.division)
 
         for i in reversed(range(depth)):
-            step = (self.division_count // self.measure[1]) // 2**i
+            step = (self.division // self.measure[1]) // 2**i
             pd[::step] = weights[i]
 
         self._pd = pd
@@ -94,14 +94,14 @@ class Melody(MelodyPattern):
         scale: Scale,
         randomness: int,
         chord_progression: Chords,
-        division_count=16,
+        division=16,
         ref_note=0,
         measure: tuple[int, int] = (4, 4),
         pattern: MelodyPattern = None,
         notes: list[int] = None,
         velocity: list[int] = None
     ):
-        super().__init__(randomness, chord_progression.bar_length, division_count, measure)
+        super().__init__(randomness, chord_progression.bar_length, division, measure)
         self.scale: Scale = scale
         self.notes: list[int] = notes
         self.velocity: list[int] = velocity
@@ -206,7 +206,7 @@ class Melody(MelodyPattern):
         한 마디에 해당하는 멜로디를 만듦
         '''
         cp_len = len(cp)
-        note_num_for_each_chord = self.division_count // cp_len
+        note_num_for_each_chord = self.division // cp_len
 
         scale = self.scale
 
@@ -296,9 +296,8 @@ class Melody(MelodyPattern):
                 notes.append([note, dur])
             else:
                 cp = self.chord_progression.cp
-                curr_chord = cp[total_duration // ((self.bar_length * self.division_count) // len(cp))]
+                curr_chord = cp[total_duration // ((self.bar_length * self.division) // len(cp))]
 
-                print(curr_chord)
                 scale = Scale.estimate_scale(curr_chord)
                 usable_notes = list(scale.scale.intersection(Melody.limit)) 
                 note_number = Melody._calc_next_note(
@@ -314,7 +313,7 @@ class Melody(MelodyPattern):
             scale=self.scale,
             randomness=self.randomness,
             chord_progression=self.chord_progression,
-            division_count=self.division_count,
+            division=self.division,
             ref_note=self.ref_note,
             measure=self.measure,
             pattern=self.pattern,

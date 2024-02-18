@@ -81,10 +81,10 @@ class ChordWithPattern:
         self,
         cp: Chords,
         pattern: Pattern,
-        division_count=8,
+        division=8,
     ):
         self.cp = cp
-        self.division_count = division_count
+        self.division = division
         self.pattern = pattern
         self.build_chord()
 
@@ -104,7 +104,7 @@ class ChordWithPattern:
 
     def build_chord(self):
         bar_length = self.cp.bar_length
-        pattern_nums = (bar_length * self.division_count) // self.pattern.length
+        pattern_nums = (bar_length * self.division) // self.pattern.length
         chord_pattern = self.pattern.pattern * pattern_nums
         dur_pattern = self.pattern.duration * pattern_nums
 
