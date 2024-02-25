@@ -1,7 +1,10 @@
 import pretty_midi
 import numpy as np
+import random
+from pychord import Chord
 from utils.chord import *
 from utils.melody import *
+from utils.util import *
 
 # bpm = 80
 
@@ -168,52 +171,55 @@ def make_song(
     [main_instrument, sub_instrumnet] = instruments[genre]
 
     # TODO: randomize scale
-    default_scale = MajorScale('C')
+    deviation = random.randint(0, 11)
+    default_scale = MajorScale(get_transposed_root('C', deviation))
+
+    chords_selection = [get_transposed_cp(random.choice(chord_progressions), deviation) for _ in range(4)]
 
     # TODO: transpose chord w.r.t. root
     inoutro = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[0], 2),
+            cp=Chords(chords_selection[0], 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[0],
         bar_part=4,
-        measure=(4,4),
+        measure=(4, 4),
     )
     verse = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[1], 2),
+            cp=Chords(chords_selection[1], 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[1],
         bar_part=8,
-        measure=(4,4),
+        measure=(4, 4),
     )
     chorus = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[9], 4),
+            cp=Chords(chords_selection[2], 4),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[2],
         bar_part=8,
-        measure=(4,4),
+        measure=(4, 4),
     )
     bridge = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[-1], 2),
+            cp=Chords(chords_selection[3], 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[3],
         bar_part=8,
-        measure=(4,4),
+        measure=(4, 4),
     )
 
     merge_part(
