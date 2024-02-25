@@ -170,13 +170,11 @@ def make_song(
     output_midi = pretty_midi.PrettyMIDI()
     [main_instrument, sub_instrumnet] = instruments[genre]
 
-    # TODO: randomize scale
     deviation = random.randint(0, 11)
     default_scale = MajorScale(get_transposed_root('C', deviation))
 
     chords_selection = [get_transposed_cp(random.choice(chord_progressions), deviation) for _ in range(4)]
 
-    # TODO: transpose chord w.r.t. root
     inoutro = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
