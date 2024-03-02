@@ -200,7 +200,7 @@ def make_song(
     chorus = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chords_selection[2], 4),
+            cp=Chords(chords_selection[2], len(chords_selection[2]) // 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
