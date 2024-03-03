@@ -1,9 +1,10 @@
 import pretty_midi
 import numpy as np
+import random
+from pychord import Chord
 from utils.chord import *
 from utils.melody import *
-
-# bpm = 80
+from utils.util import *
 
 class NoteWrapper:
     def __init__(self, notes, division):
@@ -165,65 +166,66 @@ def make_song(
 
     # song making start
     output_midi = pretty_midi.PrettyMIDI()
-    [main_instrument, sub_instrumnet] = instruments[genre]
+    [main_instrument, sub_instrument] = instruments[genre]
 
-    # TODO: randomize scale
-    default_scale = MajorScale('C')
+    deviation = random.randint(0, 11)
+    default_scale = MajorScale(get_transposed_root('C', deviation))
 
-    # TODO: transpose chord w.r.t. root
+    chords_selection = [get_transposed_cp(random.choice(chord_progressions), deviation) for _ in range(4)]
+
     inoutro = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[0], 2),
+            cp=Chords(chords_selection[0], 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[0],
         bar_part=4,
-        measure=(4,4),
+        measure=(4, 4),
     )
     verse = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[1], 2),
+            cp=Chords(chords_selection[1], 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[1],
         bar_part=8,
-        measure=(4,4),
+        measure=(4, 4),
     )
     chorus = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[9], 4),
+            cp=Chords(chords_selection[2], len(chords_selection[2]) // 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[2],
         bar_part=8,
-        measure=(4,4),
+        measure=(4, 4),
     )
     bridge = create_part(
         scale=default_scale,
         chord_pattern=ChordWithPattern(
-            cp=Chords(chord_progressions[-1], 2),
+            cp=Chords(chords_selection[3], 2),
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
         randomness=randomness_selection[3],
         bar_part=8,
-        measure=(4,4),
+        measure=(4, 4),
     )
 
     merge_part(
         part_list=[inoutro, verse, chorus, verse, chorus, bridge, chorus, inoutro],
-        instrument_list=[main_instrument, sub_instrumnet],
+        instrument_list=[main_instrument, sub_instrument],
         bpm=bpm,
     )
 
     output_midi.instruments.append(main_instrument)
-    output_midi.instruments.append(sub_instrumnet)
+    output_midi.instruments.append(sub_instrument)
     output_midi.write('src/test/output.mid')
 
 if __name__ == '__main__':
