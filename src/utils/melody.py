@@ -18,17 +18,17 @@ class MelodyPattern:
     def __init__(
         self,
         randomness,
-        bar_length=1,
-        division=16,
-        measure=(4, 4)
+        bar_length = 1,
+        division = 16,
+        measure = (4, 4)
     ):
         self.randomness = randomness            # 무작위도
         self.bar_length = bar_length            # 마디 개수
-        self.division = division    # 한 마디를 몇 개로 나눌건지
+        self.division = division                # 한 마디를 몇 개로 나눌건지
         self.measure = measure                  # 박자
 
-        self._make_probability_distribution()    # pattern을 생성할 확률분포
-        self.build_pattern()                     # 멜로디 패턴
+        self._make_probability_distribution()   # pattern을 생성할 확률분포
+        self.build_pattern()                    # 멜로디 패턴
 
         # note가 두 개 이하면 다시 생성.
         while sum(self.pattern) <= 2:
@@ -94,8 +94,8 @@ class Melody(MelodyPattern):
         scale: Scale,
         randomness: int,
         chord_progression: Chords,
-        division=16,
-        ref_note=0,
+        division = 16,
+        ref_note = 0,
         measure: tuple[int, int] = (4, 4),
         pattern: MelodyPattern = None,
         notes: list[int] = None,
@@ -110,7 +110,7 @@ class Melody(MelodyPattern):
         self.start_chord = Chord('CM7')
         self.ref_note = ref_note
 
-        # randomness와 pattern을 동시에 넘겨주면,f randomness는 pattern에 영향을 주지 않음.
+        # randomness와 pattern을 동시에 넘겨주면, randomness는 pattern에 영향을 주지 않음.
         # 즉, 주어진 pattern으로 고정.
         if (pattern is not None):
             self.pattern = pattern
@@ -140,13 +140,12 @@ class Melody(MelodyPattern):
     @staticmethod
     def _calc_next_note(curr_note_number, usable_notes, randomness):
         '''
-            return next_note's number
+        return next_note's number
         '''
         curr_note_index = find_nearest(usable_notes, curr_note_number)[0]
 
         while True:
-            next_dist = np.random.normal(
-                curr_note_index, Melody.__RANDOM_WEIGHT*randomness+0.1)
+            next_dist = np.random.normal(curr_note_index, Melody.__RANDOM_WEIGHT*randomness + 0.1)
             next_note_index = np.floor(next_dist).astype(int)
 
             if (0 <= next_note_index < len(usable_notes)):
@@ -155,7 +154,7 @@ class Melody(MelodyPattern):
     @staticmethod
     def _choose_from_chord(chord: Chord, curr_note, randomness=0):
         '''
-            return next_note's number
+        return next_note's number
         '''
 
         chord_notes_number = []
@@ -169,8 +168,7 @@ class Melody(MelodyPattern):
         for w in weight:
             result_chord_notes.extend(chord_notes_number - w)
         
-        chord_notes_number = list(
-            set(result_chord_notes).intersection(Melody.limit))
+        chord_notes_number = list(set(result_chord_notes).intersection(Melody.limit))
 
         if (curr_note == 0):
             return random.choice(chord_notes_number)
@@ -276,8 +274,7 @@ class Melody(MelodyPattern):
             else:
                 # 현재 멜로디와 가장 가까운 음을 찾는다.
                 curr_mel_index = self.usable_notes.index(mel)
-                next_mel_index = Melody._calc_next_note(
-                    curr_mel_index, self.randomness, limit_len)
+                next_mel_index = Melody._calc_next_note(curr_mel_index, self.randomness, limit_len)
                 next_mel = self.usable_notes[next_mel_index]
                 res_melody.append([next_mel, dur])
 
@@ -336,8 +333,7 @@ def printMelody(melody):
     melody_main = np.array(melody.notes)[:, 0]
     melody_dur = np.array(melody.notes)[:, 1]
 
-    print(np.vectorize(pretty_midi.note_number_to_name)
-          (np.array(melody_main)), melody_dur)
+    print(np.vectorize(pretty_midi.note_number_to_name)(np.array(melody_main)), melody_dur)
 
 
 if __name__ == '__main__':

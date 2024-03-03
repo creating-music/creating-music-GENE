@@ -6,8 +6,6 @@ from utils.chord import *
 from utils.melody import *
 from utils.util import *
 
-# bpm = 80
-
 class NoteWrapper:
     def __init__(self, notes, division):
         self.notes = notes
@@ -168,7 +166,7 @@ def make_song(
 
     # song making start
     output_midi = pretty_midi.PrettyMIDI()
-    [main_instrument, sub_instrumnet] = instruments[genre]
+    [main_instrument, sub_instrument] = instruments[genre]
 
     deviation = random.randint(0, 11)
     default_scale = MajorScale(get_transposed_root('C', deviation))
@@ -222,12 +220,12 @@ def make_song(
 
     merge_part(
         part_list=[inoutro, verse, chorus, verse, chorus, bridge, chorus, inoutro],
-        instrument_list=[main_instrument, sub_instrumnet],
+        instrument_list=[main_instrument, sub_instrument],
         bpm=bpm,
     )
 
     output_midi.instruments.append(main_instrument)
-    output_midi.instruments.append(sub_instrumnet)
+    output_midi.instruments.append(sub_instrument)
     output_midi.write('src/test/output.mid')
 
 if __name__ == '__main__':
