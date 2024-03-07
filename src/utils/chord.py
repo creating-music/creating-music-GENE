@@ -1,4 +1,3 @@
-from xml.dom.pulldom import default_bufsize
 from pychord import Chord, ChordProgression
 import pretty_midi
 import numpy as np

@@ -160,13 +160,13 @@ def make_song(
     print(randomness_selection, bpm)
 
     instruments = {
-        'newage': [pretty_midi.Instrument(program=0), pretty_midi.Instrument(program=0)],
-        'retro': [pretty_midi.Instrument(program=80), pretty_midi.Instrument(program=81)],
+        'newage': [pretty_midi.Instrument(program=0), pretty_midi.Instrument(program=0), pretty_midi.Instrument(program=0, is_drum=True)],
+        'retro': [pretty_midi.Instrument(program=80), pretty_midi.Instrument(program=81), pretty_midi.Instrument(program=0, is_drum=True)],
     }
 
     # song making start
     output_midi = pretty_midi.PrettyMIDI()
-    [main_instrument, sub_instrument] = instruments[genre]
+    [main_instrument, sub_instrument, drum_instrument] = instruments[genre]
 
     deviation = random.randint(0, 11)
     default_scale = MajorScale(get_transposed_root('C', deviation))
@@ -220,7 +220,7 @@ def make_song(
 
     merge_part(
         part_list=[inoutro, verse, chorus, verse, chorus, bridge, chorus, inoutro],
-        instrument_list=[main_instrument, sub_instrument],
+        instrument_list=[main_instrument, sub_instrument, drum_instrument],
         bpm=bpm,
     )
 
