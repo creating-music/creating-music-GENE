@@ -4,15 +4,23 @@ import random
 from pychord import Chord
 from utils.chord import *
 from utils.melody import *
+from utils.drum import *
 from utils.util import *
 
 class NoteWrapper:
-    def __init__(self, notes, division):
+    def __init__(
+        self, 
+        notes, 
+        division, 
+        is_drum = False
+    ):
         self.notes = notes
         self.division = division
+        self.is_drum = is_drum
 
     def __str__(self):
         return f'notes: {self.notes}\ndivision: {self.division}'
+
 
 def apply_midi(
     instrument,
@@ -32,9 +40,29 @@ def apply_midi(
 
     return start_base
 
+def apply_drum(
+    drum_instrument,
+    start_base,
+    duration,
+    drum_notes,
+):
+    for n in drum_notes:
+        for drum_each in n:
+            note = pretty_midi.Note(
+                velocity=100,
+                pitch=drum_each,
+                start=start_base,
+                end=start_base + duration
+            )
+            drum_instrument.notes.append(note)
+        start_base += duration
+
+    return start_base
+
 def create_part(
     scale: Scale,
     chord_pattern: ChordWithPattern,
+    drum_pattern: DrumPattern,
     randomness: int,
     bar_part: int=8,
     measure=(4,4)
@@ -83,7 +111,12 @@ def create_part(
         chord_note_total.extend(chord.notes)
     chord_wrapper = NoteWrapper(chord_note_total, chord_pattern.division)
 
-    return [melody_wrapper, chord_wrapper]
+    drum_note_total = []
+    for _ in range(bar_part // drum_pattern.bar_length):
+        drum_note_total.extend(drum_pattern.pattern)
+    drum_wrapper = NoteWrapper(drum_note_total, drum_pattern.division, is_drum=True)
+
+    return [melody_wrapper, chord_wrapper, drum_wrapper]
 
 def merge_part(
     part_list: list[list[NoteWrapper]],
@@ -99,7 +132,10 @@ def merge_part(
         start_base_each = 0
         for (note_wrapper, instrument) in zip(part, instrument_list):
             duration = (1/note_wrapper.division) * (240/bpm)
-            start_base_each = apply_midi(instrument, start_base, duration, note_wrapper.notes)
+            if (note_wrapper.is_drum):
+                start_base_each = apply_drum(instrument, start_base, duration, note_wrapper.notes)
+            else:
+                start_base_each = apply_midi(instrument, start_base, duration, note_wrapper.notes)
             start_base_each = np.round(start_base_each, decimals=4)
 
         start_base = start_base_each
@@ -160,13 +196,19 @@ def make_song(
     print(randomness_selection, bpm)
 
     instruments = {
-        'newage': [pretty_midi.Instrument(program=0), pretty_midi.Instrument(program=0), pretty_midi.Instrument(program=0, is_drum=True)],
-        'retro': [pretty_midi.Instrument(program=80), pretty_midi.Instrument(program=81), pretty_midi.Instrument(program=0, is_drum=True)],
+        'piano_acoustic': pretty_midi.Instrument(program=0),
+        'lead_square': pretty_midi.Instrument(program=80),
+        'lead_sawtooth': pretty_midi.Instrument(program=81),
+        'drum_acoustic': pretty_midi.Instrument(program=0, is_drum=True),
+    }
+    instruments_set = {
+        'newage': [instruments['piano_acoustic'], instruments['piano_acoustic'], instruments['drum_acoustic']],
+        'retro': [instruments['lead_square'], instruments['lead_sawtooth'], instruments['drum_acoustic']],
     }
 
     # song making start
     output_midi = pretty_midi.PrettyMIDI()
-    [main_instrument, sub_instrument, drum_instrument] = instruments[genre]
+    [main_instrument, sub_instrument, drum_instrument] = instruments_set[genre]
 
     deviation = random.randint(0, 11)
     default_scale = MajorScale(get_transposed_root('C', deviation))
@@ -180,6 +222,7 @@ def make_song(
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
+        drum_pattern=drum_patterns[0],
         randomness=randomness_selection[0],
         bar_part=4,
         measure=(4, 4),
@@ -191,6 +234,7 @@ def make_song(
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
+        drum_pattern=drum_patterns[1],
         randomness=randomness_selection[1],
         bar_part=8,
         measure=(4, 4),
@@ -202,6 +246,7 @@ def make_song(
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
+        drum_pattern=drum_patterns[1],
         randomness=randomness_selection[2],
         bar_part=8,
         measure=(4, 4),
@@ -213,6 +258,7 @@ def make_song(
             pattern=ArpeggioPattern(pat_method='one-five', dur_method='stacato'),
             division=8,
         ),
+        drum_pattern=drum_patterns[1],
         randomness=randomness_selection[3],
         bar_part=8,
         measure=(4, 4),
@@ -226,10 +272,11 @@ def make_song(
 
     output_midi.instruments.append(main_instrument)
     output_midi.instruments.append(sub_instrument)
+    output_midi.instruments.append(drum_instrument)
     output_midi.write('src/test/output.mid')
 
 if __name__ == '__main__':
     make_song(
-        genre='newage',
+        genre='retro',
         mood='happy',
     )
