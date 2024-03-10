@@ -3,10 +3,10 @@ import numpy as np
 import random
 from typing import Union
 from pychord import Chord
-from utils.chord import *
-from utils.melody import *
-from utils.drum import *
-from utils.util import *
+from .module.chord import *
+from .module.melody import *
+from .module.drum import *
+from .util.music.util import *
 
 class NoteWrapper:
     def __init__(
@@ -147,6 +147,7 @@ def merge_part(
 def make_song(
     genre: str,
     mood: str,
+    music_path: str,
     bpm: Union[int, None]=None,
     max_randomness: float=0.7,
 ):
@@ -277,10 +278,11 @@ def make_song(
     output_midi.instruments.append(main_instrument)
     output_midi.instruments.append(sub_instrument)
     output_midi.instruments.append(drum_instrument)
-    output_midi.write('src/test/output.mid')
+    output_midi.write(music_path)
 
 if __name__ == '__main__':
     make_song(
         genre='retro',
         mood='happy',
+        music_path='./assets/music/output.mid'
     )

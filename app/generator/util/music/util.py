@@ -1,21 +1,5 @@
 from pychord import Chord, ChordProgression
 
-def divide_chunk(list_dividend, division_size):
-    def __divide_chunk(l, n):
-        for i in range(0, len(l), n):
-            yield l[i : i+n]
-
-    return list(__divide_chunk(list_dividend, division_size))
-
-def divide_chunk_into(list_dividend, num):
-    division_size = len(list_dividend) // num
-    division_res = len(list_dividend) % num
-
-    if (division_res != 0):
-        raise Exception('Not equally divisible.')
-
-    return divide_chunk(list_dividend, division_size)
-
 def get_transposed_root(root: str, amount: int) -> str:
     __notes_with_sharp = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
     __notes_with_flat = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
