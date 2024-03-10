@@ -82,7 +82,7 @@ class MelodyPattern:
         self.pattern = pattern
 
 
-class Melody(MelodyPattern):
+class Melody():
     # 멜로디가 올라갈 / 내려갈 수 있는 한계.
     limit = range(
         pretty_midi.note_name_to_number('E4'),
@@ -102,21 +102,26 @@ class Melody(MelodyPattern):
         notes: Union[list[tuple[int, int]], None] = None,
         velocity: Union[list[int], None] = None
     ):
-        super().__init__(randomness, chord_progression.bar_length, division, measure)
         self.scale: Scale = scale
         self.notes = notes
         self.velocity = velocity
         self.chord_progression = chord_progression
         self.start_chord = Chord('CM7')
         self.ref_note = ref_note
+        self.randomness = randomness
+        self.division = division
+        self.measure = measure
+        self.bar_length = chord_progression.bar_length
 
         if (scale.scale is not None):
             self.usable_notes = list(set(Melody.limit).intersection(scale.scale))
 
         # randomness와 pattern을 동시에 넘겨주면, randomness는 pattern에 영향을 주지 않음.
         # 즉, 주어진 pattern으로 고정.
-        if (pattern is not None):
-            self.pattern = pattern
+        if (pattern is None):
+            self.melody_pattern = MelodyPattern(randomness, chord_progression.bar_length, division, measure)
+        else:
+            self.melody_pattern = pattern
 
         if (notes is None):
             self.notes = []
@@ -192,7 +197,7 @@ class Melody(MelodyPattern):
         '''
 
         cps = divide_chunk_into(self.chord_progression.cp, self.bar_length)
-        patterns = divide_chunk_into(self.pattern, self.bar_length)
+        patterns = divide_chunk_into(self.melody_pattern.pattern, self.bar_length)
 
         notes = []
         for (cp, pattern) in zip(cps, patterns):
@@ -202,7 +207,7 @@ class Melody(MelodyPattern):
 
         self.notes = notes
 
-    def _make_bar(self, cp: ChordProgression, pattern: MelodyPattern, ref_note=0):
+    def _make_bar(self, cp: ChordProgression, pattern: list[int], ref_note=0):
         '''
         한 마디에 해당하는 멜로디를 만듦
         '''
@@ -332,7 +337,7 @@ class Melody(MelodyPattern):
             division=self.division,
             ref_note=self.ref_note,
             measure=self.measure,
-            pattern=self.pattern,
+            pattern=self.melody_pattern,
             notes=notes,
             velocity=self.velocity,
         )

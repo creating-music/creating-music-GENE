@@ -1,3 +1,4 @@
+from typing import Union
 from pychord import Chord, ChordProgression
 import pretty_midi
 import numpy as np
@@ -107,6 +108,7 @@ class ChordWithPattern:
         chord_pattern = self.pattern.pattern * pattern_nums
         dur_pattern = self.pattern.duration * pattern_nums
 
+        chord_pattern_with_dur: list[tuple[int, int]] = []
         for (i, pat) in enumerate(chord_pattern):
             
             curr_chord: Chord = self.cp.cp[i // (len(chord_pattern) // self.cp.chord_nums)]
@@ -118,6 +120,6 @@ class ChordWithPattern:
             note = pretty_midi.note_name_to_number(chord_component[note_order])
             note += note_pitch * 12
 
-            chord_pattern[i] = [note, dur_pattern[i]]
+            chord_pattern_with_dur.append((note, dur_pattern[i]))
 
-        self.notes = chord_pattern
+        self.notes = chord_pattern_with_dur
