@@ -1,6 +1,7 @@
 import pretty_midi
 import numpy as np
 import random
+from typing import Union
 from pychord import Chord
 from utils.chord import *
 from utils.melody import *
@@ -102,6 +103,9 @@ def create_part(
 
     melody_note_total = []
     for melody in melodies:
+        if (melody.notes is None):
+            raise Exception('Empty melody notes')
+
         melody_note_total.extend(melody.notes)
     melody_wrapper = NoteWrapper(melody_note_total, melody_primary.division)
 
@@ -143,8 +147,8 @@ def merge_part(
 def make_song(
     genre: str,
     mood: str,
-    bpm: int | None=None,
-    max_randomness: int=0.7,
+    bpm: Union[int, None]=None,
+    max_randomness: float=0.7,
 ):
     if genre not in ['newage', 'retro']:
         raise Exception('Unsupported genre.')
@@ -178,7 +182,7 @@ def make_song(
 
     if bpm is None:
         # 장르와 무드에 따라 bpm 설정
-        bpm_list = list(limitations[genre]['bpm'].intersection(limitations[mood]['bpm']))
+        bpm_list: list[int] = list(limitations[genre]['bpm'].intersection(limitations[mood]['bpm']))
         bpm = random.choice(bpm_list)
 
     randomness_list = list(limitations[genre]['randomness'].intersection(limitations[mood]['randomness']))
