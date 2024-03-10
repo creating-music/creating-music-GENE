@@ -1,6 +1,7 @@
 import pretty_midi
 import numpy as np
 import random
+from typing import Union
 from pychord import Chord, ChordProgression
 from .chord import Chords
 from .scale import *
@@ -81,7 +82,7 @@ class MelodyPattern:
         self.pattern = pattern
 
 
-class Melody(MelodyPattern):
+class Melody():
     # 멜로디가 올라갈 / 내려갈 수 있는 한계.
     limit = range(
         pretty_midi.note_name_to_number('E4'),
@@ -97,23 +98,30 @@ class Melody(MelodyPattern):
         division = 16,
         ref_note = 0,
         measure: tuple[int, int] = (4, 4),
-        pattern: MelodyPattern = None,
-        notes: list[int] = None,
-        velocity: list[int] = None
+        pattern: Union[MelodyPattern, None] = None,
+        notes: Union[list[tuple[int, int]], None] = None,
+        velocity: Union[list[int], None] = None
     ):
-        super().__init__(randomness, chord_progression.bar_length, division, measure)
         self.scale: Scale = scale
-        self.notes: list[int] = notes
-        self.velocity: list[int] = velocity
-        self.usable_notes = list(set(Melody.limit).intersection(scale.scale))
+        self.notes = notes
+        self.velocity = velocity
         self.chord_progression = chord_progression
         self.start_chord = Chord('CM7')
         self.ref_note = ref_note
+        self.randomness = randomness
+        self.division = division
+        self.measure = measure
+        self.bar_length = chord_progression.bar_length
+
+        if (scale.scale is not None):
+            self.usable_notes = list(set(Melody.limit).intersection(scale.scale))
 
         # randomness와 pattern을 동시에 넘겨주면, randomness는 pattern에 영향을 주지 않음.
         # 즉, 주어진 pattern으로 고정.
-        if (pattern is not None):
-            self.pattern = pattern
+        if (pattern is None):
+            self.melody_pattern = MelodyPattern(randomness, chord_progression.bar_length, division, measure)
+        else:
+            self.melody_pattern = pattern
 
         if (notes is None):
             self.notes = []
@@ -189,7 +197,7 @@ class Melody(MelodyPattern):
         '''
 
         cps = divide_chunk_into(self.chord_progression.cp, self.bar_length)
-        patterns = divide_chunk_into(self.pattern, self.bar_length)
+        patterns = divide_chunk_into(self.melody_pattern.pattern, self.bar_length)
 
         notes = []
         for (cp, pattern) in zip(cps, patterns):
@@ -199,7 +207,7 @@ class Melody(MelodyPattern):
 
         self.notes = notes
 
-    def _make_bar(self, cp: ChordProgression, pattern: MelodyPattern, ref_note=0):
+    def _make_bar(self, cp: ChordProgression, pattern: list[int], ref_note=0):
         '''
         한 마디에 해당하는 멜로디를 만듦
         '''
@@ -225,6 +233,10 @@ class Melody(MelodyPattern):
                     scale = self.scale
                 else:
                     scale = Scale.estimate_scale(cp[nth_chord])
+
+                if (scale.scale is None):
+                    raise Exception('scale is empty')
+
                 usable_notes = list(scale.scale.intersection(Melody.limit))
 
             if (p == 0):
@@ -268,6 +280,10 @@ class Melody(MelodyPattern):
     def differ_melody(self, melody_randomness, pattern_randomness=0):
         limit_len = len(self.usable_notes)
         res_melody = []
+        
+        if (self.notes is None):
+            raise Exception('Empty notes')
+        
         for (mel, dur) in self.notes:
             if (random.uniform(0, 1) <= melody_randomness):
                 res_melody.append([mel, dur])
@@ -287,6 +303,10 @@ class Melody(MelodyPattern):
         notes = []
 
         total_duration = 0
+
+        if (self.notes is None):
+            raise Exception('Empty notes')
+
         for [note, dur] in self.notes:
 
             if (note == 0) or (random.uniform(0, 1) > melody_randomness):
@@ -296,6 +316,10 @@ class Melody(MelodyPattern):
                 curr_chord = cp[total_duration // ((self.bar_length * self.division) // len(cp))]
 
                 scale = Scale.estimate_scale(curr_chord)
+
+                if (scale.scale is None):
+                    raise Exception('Scale estimation fault')
+                
                 usable_notes = list(scale.scale.intersection(Melody.limit)) 
                 note_number = Melody._calc_next_note(
                     note,
@@ -313,14 +337,16 @@ class Melody(MelodyPattern):
             division=self.division,
             ref_note=self.ref_note,
             measure=self.measure,
-            pattern=self.pattern,
+            pattern=self.melody_pattern,
             notes=notes,
             velocity=self.velocity,
         )
 
     @property
     def end_note(self):
-        return self.notes[-1][0]
+        if (self.notes is not None):
+            return self.notes[-1][0]
+        return 0
 
 
 def find_nearest(array, value):
@@ -334,12 +360,3 @@ def printMelody(melody):
     melody_dur = np.array(melody.notes)[:, 1]
 
     print(np.vectorize(pretty_midi.note_number_to_name)(np.array(melody_main)), melody_dur)
-
-
-if __name__ == '__main__':
-    mscale = MajorScale('C')
-    melody = Melody(mscale, randomness=0.5)
-    melody_2 = Melody(mscale, randomness=0.8)
-
-    printMelody(melody)
-    printMelody(melody_2)

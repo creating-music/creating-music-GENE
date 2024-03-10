@@ -1,3 +1,4 @@
+from typing import Union
 from pychord import Chord
 import pretty_midi
 import numpy as np
@@ -18,7 +19,7 @@ class Scale:
         self.root = root                    # 근음. ex) 'C'
         # 스케일의 음 간격. ex) [0, 2, 4, 5, 7, 9, 11]
         self.default_scale = scale
-        self.scale = None                   # 실제 스케일의 음.
+        self.scale: Union[set[int], None] = None                   # 실제 스케일의 음.
         self.mode = mode                    # 몇 번째 모드인지. 1 이면 원래 스케일과 동일.
         self.scale_name = None              # 스케일의 이름 (Major, Minor...)
         self.build_scale(scale)
