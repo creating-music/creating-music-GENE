@@ -2,7 +2,7 @@ import asyncio
 from typing import Union
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from generator import generator
+from app.generator import generator
 
 app = FastAPI()
 
@@ -13,7 +13,7 @@ def read_root():
 
 @app.get('/music')
 def get_music():
-    music_path = './assets/music/output.mid'
+    music_path = './app/assets/music/output.mid'
     generator.make_song(
         genre='retro',
         mood='happy',

@@ -1,0 +1,20 @@
+## USAGE: source run <function name>
+## ex) source run init
+
+function init {
+  python3 -m venv .venv && \
+  . .venv/bin/activate && \
+  pip install -r requirements.txt
+}
+
+function start {
+  . .venv/bin/activate && \
+  uvicorn app.main:app --host 0.0.0.0 --port 8000
+}
+
+function clean {
+  deactivate
+  rm -rf .venv
+}
+
+"$@"
