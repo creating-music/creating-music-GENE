@@ -148,6 +148,7 @@ def make_song(
     genre: str,
     mood: str,
     music_path: str,
+    tempo: str,
     bpm: Union[int, None]=None,
     max_randomness: float=0.7,
 ):
@@ -156,6 +157,9 @@ def make_song(
 
     if mood not in ['happy', 'sad', 'grand']:
         raise Exception('Unsupported mood.')
+
+    if tempo not in ['slow', 'moderate', 'fast']:
+        raise Exception('Unsupported tempo.')
 
     quant_size = 0.1
     limitations = {
@@ -184,7 +188,14 @@ def make_song(
     if bpm is None:
         # 장르와 무드에 따라 bpm 설정
         bpm_list: list[int] = list(limitations[genre]['bpm'].intersection(limitations[mood]['bpm']))
-        bpm = random.choice(bpm_list)
+        cropped_bpm_list: list[list[int]] = divide_chunk_into(bpm_list, 3)
+
+        if (tempo == 'slow'):
+            bpm = random.choice(cropped_bpm_list[0])
+        elif (tempo == 'moderate'):
+            bpm = random.choice(cropped_bpm_list[1])
+        else:
+            bpm = random.choice(cropped_bpm_list[2])
 
     randomness_list = list(limitations[genre]['randomness'].intersection(limitations[mood]['randomness']))
 
@@ -284,5 +295,6 @@ if __name__ == '__main__':
     make_song(
         genre='retro',
         mood='happy',
-        music_path='./assets/music/output.mid'
+        tempo='slow',
+        music_path='./test/output.mid'
     )

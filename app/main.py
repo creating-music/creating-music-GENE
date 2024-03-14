@@ -17,6 +17,7 @@ def get_music():
     generator.make_song(
         genre='retro',
         mood='happy',
+        tempo='slow',
         music_path=music_path,
     )
     return FileResponse(music_path)
