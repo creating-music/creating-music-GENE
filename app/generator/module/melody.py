@@ -5,7 +5,7 @@ from typing import Union
 from pychord import Chord, ChordProgression
 from .chord import Chords
 from .scale import *
-from .util import divide_chunk_into
+from ..util.common.util import divide_chunk_into
 
 
 class MelodyPattern:

@@ -3,10 +3,10 @@ import numpy as np
 import random
 from typing import Union
 from pychord import Chord
-from utils.chord import *
-from utils.melody import *
-from utils.drum import *
-from utils.util import *
+from .module.chord import *
+from .module.melody import *
+from .module.drum import *
+from .util.music.util import *
 
 class NoteWrapper:
     def __init__(
@@ -147,6 +147,8 @@ def merge_part(
 def make_song(
     genre: str,
     mood: str,
+    music_path: str,
+    tempo: str,
     bpm: Union[int, None]=None,
     max_randomness: float=0.7,
 ):
@@ -155,6 +157,9 @@ def make_song(
 
     if mood not in ['happy', 'sad', 'grand']:
         raise Exception('Unsupported mood.')
+
+    if tempo not in ['slow', 'moderate', 'fast']:
+        raise Exception('Unsupported tempo.')
 
     quant_size = 0.1
     limitations = {
@@ -183,7 +188,14 @@ def make_song(
     if bpm is None:
         # 장르와 무드에 따라 bpm 설정
         bpm_list: list[int] = list(limitations[genre]['bpm'].intersection(limitations[mood]['bpm']))
-        bpm = random.choice(bpm_list)
+        cropped_bpm_list: list[list[int]] = divide_chunk_into(bpm_list, 3)
+
+        if (tempo == 'slow'):
+            bpm = random.choice(cropped_bpm_list[0])
+        elif (tempo == 'moderate'):
+            bpm = random.choice(cropped_bpm_list[1])
+        else:
+            bpm = random.choice(cropped_bpm_list[2])
 
     randomness_list = list(limitations[genre]['randomness'].intersection(limitations[mood]['randomness']))
 
@@ -277,10 +289,12 @@ def make_song(
     output_midi.instruments.append(main_instrument)
     output_midi.instruments.append(sub_instrument)
     output_midi.instruments.append(drum_instrument)
-    output_midi.write('src/test/output.mid')
+    output_midi.write(music_path)
 
 if __name__ == '__main__':
     make_song(
         genre='retro',
         mood='happy',
+        tempo='slow',
+        music_path='./test/output.mid'
     )
