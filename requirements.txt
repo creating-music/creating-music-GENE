@@ -12,6 +12,7 @@ pretty-midi==0.2.10
 pychord==1.2.2
 pydantic==2.6.3
 pydantic_core==2.16.3
+pydub==0.25.1
 python-dotenv==1.0.1
 PyYAML==6.0.1
 six==1.16.0
